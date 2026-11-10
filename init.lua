@@ -127,6 +127,12 @@ do
   -- Enable break indent
   vim.o.breakindent = true
 
+  -- Default to four spaces; language defaults and project settings can override this.
+  vim.o.expandtab = true
+  vim.o.tabstop = 4
+  vim.o.shiftwidth = 4
+  vim.o.softtabstop = -1 -- Follow shiftwidth when pressing <Tab> or <BS>.
+
   -- Enable undo/redo changes even after closing and reopening a file
   vim.o.undofile = true
 
@@ -242,6 +248,33 @@ do
 
   -- [[ Basic Autocommands ]]
   --  See `:help lua-guide-autocommands`
+
+  -- Set language defaults before EditorConfig and guess-indent apply project/file settings.
+  local indent_widths = {
+    c = 4,
+    cpp = 4,
+    python = 4,
+    rust = 4,
+    javascript = 2,
+    javascriptreact = 2,
+    typescript = 2,
+    typescriptreact = 2,
+    lua = 2,
+    go = 8,
+    make = 8,
+  }
+  vim.api.nvim_create_autocmd('FileType', {
+    desc = 'Apply language indentation defaults',
+    group = vim.api.nvim_create_augroup('kickstart-language-indent', { clear = true }),
+    pattern = vim.tbl_keys(indent_widths),
+    callback = function(event)
+      local use_tabs = event.match == 'go' or event.match == 'make'
+      vim.bo[event.buf].expandtab = not use_tabs
+      vim.bo[event.buf].tabstop = indent_widths[event.match]
+      vim.bo[event.buf].shiftwidth = use_tabs and 0 or indent_widths[event.match]
+      vim.bo[event.buf].softtabstop = use_tabs and 0 or -1
+    end,
+  })
 
   -- Highlight when yanking (copying) text
   --  Try it with `yap` in normal mode
